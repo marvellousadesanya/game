@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface PuzzlePiece {
   id: number;
@@ -350,18 +350,49 @@ export default function BibleStoriesPuzzle() {
     setCurrentTouchTarget(null);
   };
 
+  // Save score to database
+  const saveScoreToDatabase = async (playerName: string, score: number) => {
+    try {
+      const response = await fetch("/api/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          playerName,
+          score,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save score");
+      }
+
+      console.log("Score saved successfully");
+    } catch (error) {
+      console.error("Error saving score:", error);
+    }
+  };
+
   // Initialize on mount - don't auto-start
   useEffect(() => {
     // Just set up the first image without starting timer
     generateImage();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Save score when final score screen is shown
+  useEffect(() => {
+    if (gameState === "finalScore" && playerName && finalScore > 0) {
+      saveScoreToDatabase(playerName, finalScore);
+    }
+  }, [gameState, playerName, finalScore, saveScoreToDatabase]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Name Input Screen
   if (gameState === "nameInput") {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen p-5">
         <div className="game-card p-8 max-w-md w-full">
-          <h1 className="game-title text-5xl font-extrabold mb-6 text-center">
+          <h1 className="game-title text-white text-5xl font-extrabold mb-6 text-center">
             🎮 Bible Stories Puzzle Challenge
           </h1>
           <p className="text-gray-600 text-center mb-8 text-lg font-medium">
@@ -399,20 +430,20 @@ export default function BibleStoriesPuzzle() {
   // Final Score Screen
   if (gameState === "finalScore") {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen p-5">
-        <div className="game-card p-8 max-w-md w-full text-center">
-          <h1 className="game-title text-5xl font-extrabold mb-6">
+      <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-5">
+        <div className="game-card p-6 md:p-8 max-w-md w-full text-center">
+          <h1 className="game-title text-3xl md:text-5xl font-extrabold mb-4 md:mb-6">
             🎉 Challenge Complete!
           </h1>
 
-          <div className="space-y-6 mb-8">
-            <div className="text-2xl">
+          <div className="space-y-4 md:space-y-6 mb-6 md:mb-8">
+            <div className="text-lg md:text-2xl">
               <span className="text-gray-600">👤 Player: </span>
               <span className="font-bold text-blue-600">{playerName}</span>
             </div>
 
             <div
-              className={`text-5xl score-celebration ${
+              className={`text-3xl md:text-5xl score-celebration ${
                 finalScore === 6
                   ? "text-yellow-500"
                   : finalScore >= 4
@@ -425,7 +456,7 @@ export default function BibleStoriesPuzzle() {
               <span className="font-bold">{finalScore}/6</span>
             </div>
 
-            <div className="text-xl text-gray-600 font-medium">
+            <div className="text-lg md:text-xl text-gray-600 font-medium">
               {finalScore === 6
                 ? "🌟 Perfect! You solved all puzzles!"
                 : finalScore >= 4
@@ -438,7 +469,7 @@ export default function BibleStoriesPuzzle() {
 
           <button
             onClick={playAgain}
-            className="game-button w-full text-lg py-4">
+            className="game-button w-full text-base md:text-lg py-3 md:py-4">
             🔄 Play Again
           </button>
         </div>
@@ -448,27 +479,27 @@ export default function BibleStoriesPuzzle() {
 
   // Game Screen
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-5">
-      <h1 className="game-title text-4xl font-extrabold mb-6 text-center">
+    <div className="flex flex-col items-center justify-center min-h-screen p-4 md:p-5">
+      <h1 className="game-title text-white text-2xl md:text-4xl font-extrabold mb-4 md:mb-6 text-center">
         🎮 Bible Stories Puzzle Challenge
       </h1>
 
       {/* Game Stats */}
-      <div className="flex justify-center space-x-4 mb-6 text-lg font-semibold flex-wrap">
-        <div className="game-stats">
+      <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4 mb-4 md:mb-6 text-sm md:text-lg font-semibold">
+        <div className="game-stats text-center sm:text-left">
           <span className="text-gray-600">👤 </span>
           <span className="text-blue-600 font-bold">{playerName}</span>
         </div>
-        <div className="game-stats">
+        <div className="game-stats text-center sm:text-left">
           <span className="text-gray-600">🏆 Score: </span>
           <span className="text-green-600 font-bold">{score}</span>
         </div>
-        <div className="game-stats">
+        <div className="game-stats text-center sm:text-left">
           <span className="text-gray-600">🧩 Puzzle: </span>
           <span className="text-purple-600 font-bold">{puzzleNumber}/6</span>
         </div>
         <div
-          className={`game-stats font-bold ${
+          className={`game-stats font-bold text-center sm:text-left ${
             timeLeft <= 5
               ? "bg-red-500 text-white timer-critical"
               : timeLeft <= 10
@@ -486,13 +517,13 @@ export default function BibleStoriesPuzzle() {
         style={{
           display: "grid",
           gap: "2px",
-          border: "5px solid #4a90e2",
-          borderRadius: "10px",
-          boxShadow: "0 10px 20px rgba(0, 0, 0, 0.2)",
+          border: "3px solid #4a90e2",
+          borderRadius: "8px",
+          boxShadow: "0 5px 15px rgba(0, 0, 0, 0.2)",
           backgroundColor: "#fff",
-          padding: "5px",
-          width: "600px",
-          height: "600px",
+          padding: "3px",
+          width: "min(90vw, 600px)",
+          height: "min(90vw, 600px)",
           gridTemplateColumns: "repeat(3, 1fr)",
           gridTemplateRows: "repeat(3, 1fr)",
           userSelect: "none",
@@ -514,8 +545,8 @@ export default function BibleStoriesPuzzle() {
                 boxSizing: "border-box",
                 transition: "transform 0.1s ease-in-out",
                 borderRadius: "5px",
-                minHeight: "190px",
-                minWidth: "190px",
+                minHeight: "min(15vw, 190px)",
+                minWidth: "min(15vw, 190px)",
                 userSelect: "none",
                 WebkitUserSelect: "none",
                 MozUserSelect: "none",
@@ -545,26 +576,30 @@ export default function BibleStoriesPuzzle() {
 
       {message && (
         <div
-          className={`message-box mt-5 px-8 py-4 rounded-lg shadow-lg text-center text-xl font-bold max-w-[80vw] ${
+          className={`message-box mt-4 md:mt-5 px-4 md:px-8 py-3 md:py-4 rounded-lg shadow-lg text-center text-lg md:text-xl font-bold max-w-[90vw] md:max-w-[80vw] ${
             isError ? "bg-red-500" : "bg-green-500"
           } text-white`}>
           {message}
         </div>
       )}
 
-      <div className="mt-6">
+      <div className="mt-4 md:mt-6">
         <button
           onClick={playAgain}
-          className="game-button bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 min-h-[44px]">
+          className="game-button bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-4 md:px-6 min-h-[44px] text-sm md:text-base w-full sm:w-auto">
           🔄 Restart Game
         </button>
       </div>
 
       {isLoading && (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center text-white text-2xl z-50">
-          <div className="animate-spin rounded-full h-20 w-20 border-4 border-white border-t-transparent mb-6"></div>
-          <span className="text-3xl font-bold">🎮 Loading puzzle...</span>
-          <span className="text-lg mt-2 opacity-80">Please wait!</span>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex flex-col items-center justify-center text-white text-lg md:text-2xl z-50 p-4">
+          <div className="animate-spin rounded-full h-16 w-16 md:h-20 md:w-20 border-4 border-white border-t-transparent mb-4 md:mb-6"></div>
+          <span className="text-xl md:text-3xl font-bold text-center">
+            🎮 Loading puzzle...
+          </span>
+          <span className="text-sm md:text-lg mt-2 opacity-80 text-center">
+            Please wait!
+          </span>
         </div>
       )}
     </div>
